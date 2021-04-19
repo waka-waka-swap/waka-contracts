@@ -1,0 +1,23 @@
+{
+  "name": "waka-swap",
+  "version": "1.0.0",
+  "description": "Waka Swap",
+  "scripts": {
+    "compile": "truffle compile",
+    "migrate": "truffle migrate",
+    "deploy": "truffle deploy",
+    "test": "truffle test"
+  },
+  "author": "Ryuhei",
+  "license": "ISC",
+  "dependencies": {
+    "@openzeppelin/contracts": "^3.4.0",
+    "truffle-hdwallet-provider": "^1.0.17"
+  },
+  "devDependencies": {
+    "@ethersproject/address": "^5.1.0",
+    "@ethersproject/solidity": "^5.1.0",
+    "chai": "^4.3.1",
+    "truffle-plugin-verify": "^0.5.7"
+  }
+}
