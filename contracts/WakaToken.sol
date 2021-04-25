@@ -5,19 +5,31 @@ pragma solidity =0.6.12;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-contract WakaToken is ERC20('WakaSwap', 'WAKA'), Ownable {
+contract WakaToken is ERC20('Waka.Finance', 'WAKA'), Ownable {
 
-    address public exchangeAirdropCampaign;
-    address public treasuryAddress;
+    address public marketing; // ~2.5%
+    address public ido; // 2.5%
+    address public devFund; // 10%
+    address public initialLPReward; // 5%
+    address public ecosystemGrants; // 2.5%
 
-    // mints 400,000 WAKA for Exchange airdrop & 275,685 for Treasury >
-    constructor (address _exchange, address _treasury) public {
 
-        exchangeAirdropCampaign = _exchange;
-        treasuryAddress = _treasury;
 
-        mintTo(exchangeAirdropCampaign, 400000000000000000000000);
-        mintTo(treasuryAddress, 275685000000000000000000);
+    // pre-mints 25% of the token supply
+    constructor (address _marketing, address _ido, address _devFund, address _initialLPReward, address _grants) public {
+
+        marketing = _marketing;
+        ido = _ido;
+        devFund = _devFund;
+        initialLPReward = _initialLPReward;
+        ecosystemGrants = _grants;
+
+        mintTo(marketing, 253696000000000000000000);
+        mintTo(ido, 250000000000000000000000);
+        mintTo(devFund, 1000000000000000000000000);
+        mintTo(initialLPReward, 500000000000000000000000);
+        mintTo(ecosystemGrants, 250000000000000000000000);
+
     }
 
     /// @notice Creates `_amount` token to `_to`. Must only be called by the owner.

@@ -63,8 +63,8 @@ contract WakaFarm is Ownable {
     uint256 public accWakaPerShareMultiple = 1E12;
     // The WakaSwap token!
     WakaToken public waka;
-    // Dev address.
-    address public devAddr;
+    // Maintenance address.
+    address public maintenance;
     // Info on each pool added
     PoolInfo[] public poolInfo;
     // Info of each user that stakes tokens.
@@ -302,7 +302,7 @@ contract WakaFarm is Ownable {
         }
         uint256 totalReward = getTotalRewardInfo(pool.lastRewardTime, block.timestamp);
         uint256 wakaReward = totalReward.mul(pool.allocPoint).div(totalAllocPoint);
-        waka.mintTo(devAddr, wakaReward.div(20)); // 5% Waka sent to dev addr every harvest
+        waka.mintTo(maintenance, wakaReward.div(10)); // 10% Waka sent to maintenance address
         waka.mintTo(address(this), wakaReward);
         pool.accWakaPerShare = pool.accWakaPerShare.add(wakaReward.mul(accWakaPerShareMultiple).div(lpSupply));
         pool.lastRewardTime = block.timestamp;
