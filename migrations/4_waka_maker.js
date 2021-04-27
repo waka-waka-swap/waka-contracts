@@ -5,7 +5,7 @@ var WakaToken = artifacts.require('WakaToken');
 var WakaBar = artifacts.require('WakaBar');
 
 module.exports = async function (deployer) {
-  await deployer.deploy(MockWakaSwapFactory, "0x0000000000000000000000000000000000000000");
+  await deployer.deploy(MockWakaSwapFactory, "0x");
   await deployer.deploy(MockWETH9);
   const factory = await MockWakaSwapFactory.deployed();
   const weth9 = (await MockWETH9.deployed()).address;

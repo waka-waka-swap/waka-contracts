@@ -20,16 +20,12 @@ contract WakaMaker is Ownable {
 
     // V1 - V5: OK
     IWakaSwapFactory public immutable factory;
-    //0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac
     // V1 - V5: OK
     address public immutable bar;
-    //0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272
     // V1 - V5: OK
     address private immutable waka;
-    //0x6B3595068778DD592e39A122f4f5a5cF09C90fE2
     // V1 - V5: OK
     address private immutable weth;
-    //0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2
 
     // V1 - V5: OK
     mapping(address => address) internal _bridges;
