@@ -4,7 +4,7 @@ pragma solidity =0.6.12;
 
 interface IWakaSwapRouter01 {
     function factory() external pure returns  (address);
-    function WETH() external pure returns (address);
+    function WFTM() external pure returns (address);
 
     function addLiquidity(
         address tokenA,

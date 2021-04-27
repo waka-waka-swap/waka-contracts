@@ -25,7 +25,7 @@ contract WakaMaker is Ownable {
     // V1 - V5: OK
     address private immutable waka;
     // V1 - V5: OK
-    address private immutable weth;
+    address private immutable wftm;
 
     // V1 - V5: OK
     mapping(address => address) internal _bridges;
@@ -46,12 +46,12 @@ contract WakaMaker is Ownable {
         address _factory,
         address _bar,
         address _waka,
-        address _weth
+        address _wftm
     ) public {
         factory = IWakaSwapFactory(_factory);
         bar = _bar;
         waka = _waka;
-        weth = _weth;
+        wftm = _wftm;
     }
 
     // F1 - F10: OK
@@ -59,7 +59,7 @@ contract WakaMaker is Ownable {
     function bridgeFor(address token) public view returns (address bridge) {
         bridge = _bridges[token];
         if (bridge == address(0)) {
-            bridge = weth;
+            bridge = wftm;
         }
     }
 
@@ -68,7 +68,7 @@ contract WakaMaker is Ownable {
     function setBridge(address token, address bridge) external onlyOwner {
         // Checks
         require(
-            token != waka && token != weth && token != bridge,
+            token != waka && token != wftm && token != bridge,
             "WakaMaker: Invalid bridge"
         );
 
@@ -153,32 +153,32 @@ contract WakaMaker is Ownable {
             if (token0 == waka) {
                 IERC20(waka).safeTransfer(bar, amount);
                 wakaOut = amount;
-            } else if (token0 == weth) {
-                wakaOut = _toWAKA(weth, amount);
+            } else if (token0 == wftm) {
+                wakaOut = _toWAKA(wftm, amount);
             } else {
                 address bridge = bridgeFor(token0);
                 amount = _swap(token0, bridge, amount, address(this));
                 wakaOut = _convertStep(bridge, bridge, amount, 0);
             }
         } else if (token0 == waka) {
-            // eg. WAKA - ETH
+            // eg. WAKA - FTM
             IERC20(waka).safeTransfer(bar, amount0);
             wakaOut = _toWAKA(token1, amount1).add(amount0);
         } else if (token1 == waka) {
             // eg. USDT - WAKA
             IERC20(waka).safeTransfer(bar, amount1);
             wakaOut = _toWAKA(token0, amount0).add(amount1);
-        } else if (token0 == weth) {
-            // eg. ETH - USDC
+        } else if (token0 == wftm) {
+            // eg. FTM - USDC
             wakaOut = _toWAKA(
-                weth,
-                _swap(token1, weth, amount1, address(this)).add(amount0)
+                wftm,
+                _swap(token1, wftm, amount1, address(this)).add(amount0)
             );
-        } else if (token1 == weth) {
-            // eg. USDT - ETH
+        } else if (token1 == wftm) {
+            // eg. USDT - FTM
             wakaOut = _toWAKA(
-                weth,
-                _swap(token0, weth, amount0, address(this)).add(amount1)
+                wftm,
+                _swap(token0, wftm, amount0, address(this)).add(amount1)
             );
         } else {
             // eg. MIC - USDT

@@ -8,26 +8,26 @@ import './libraries/TransferHelper.sol';
 import './interfaces/IWakaSwapRouter02.sol';
 import './interfaces/IWakaSwapFactory.sol';
 import './interfaces/IERC20.sol';
-import './interfaces/IWETH.sol';
+import './interfaces/IWFTM.sol';
 
 contract WakaSwapRouter02 is IWakaSwapRouter02 {
     using SafeMathWakaSwap for uint;
 
     address public immutable override factory;
-    address public immutable override WETH;
+    address public immutable override WFTM;
 
     modifier ensure(uint deadline) {
         require(deadline >= block.timestamp, 'WakaSwapRouter: EXPIRED');
         _;
     }
 
-    constructor(address _factory, address _WETH) public {
+    constructor(address _factory, address _WFTM) public {
         factory = _factory;
-        WETH = _WETH;
+        WFTM = _WFTM;
     }
 
     receive() external payable {
-        assert(msg.sender == WETH); // only accept ETH via fallback from the WETH contract
+        assert(msg.sender == WFTM); // only accept FTM via fallback from the WFTM contract
     }
 
     // **** ADD LIQUIDITY ****
@@ -85,18 +85,18 @@ contract WakaSwapRouter02 is IWakaSwapRouter02 {
     ) external virtual override payable ensure(deadline) returns (uint amountToken, uint amountETH, uint liquidity) {
         (amountToken, amountETH) = _addLiquidity(
             token,
-            WETH,
+            WFTM,
             amountTokenDesired,
             msg.value,
             amountTokenMin,
             amountETHMin
         );
-        address pair = WakaSwapLibrary.pairFor(factory, token, WETH);
+        address pair = WakaSwapLibrary.pairFor(factory, token, WFTM);
         TransferHelper.safeTransferFrom(token, msg.sender, pair, amountToken);
-        IWETH(WETH).deposit{value: amountETH}();
-        assert(IWETH(WETH).transfer(pair, amountETH));
+        IWFTM(WFTM).deposit{value: amountETH}();
+        assert(IWFTM(WFTM).transfer(pair, amountETH));
         liquidity = IWakaSwapPair(pair).mint(to);
-        // refund dust eth, if any
+        // refund dust ftm, if any
         if (msg.value > amountETH) TransferHelper.safeTransferETH(msg.sender, msg.value - amountETH);
     }
 
@@ -128,7 +128,7 @@ contract WakaSwapRouter02 is IWakaSwapRouter02 {
     ) public virtual override ensure(deadline) returns (uint amountToken, uint amountETH) {
         (amountToken, amountETH) = removeLiquidity(
             token,
-            WETH,
+            WFTM,
             liquidity,
             amountTokenMin,
             amountETHMin,
@@ -136,7 +136,7 @@ contract WakaSwapRouter02 is IWakaSwapRouter02 {
             deadline
         );
         TransferHelper.safeTransfer(token, to, amountToken);
-        IWETH(WETH).withdraw(amountETH);
+        IWFTM(WFTM).withdraw(amountETH);
         TransferHelper.safeTransferETH(to, amountETH);
     }
     function removeLiquidityWithPermit(
@@ -163,7 +163,7 @@ contract WakaSwapRouter02 is IWakaSwapRouter02 {
         uint deadline,
         bool approveMax, uint8 v, bytes32 r, bytes32 s
     ) external virtual override returns (uint amountToken, uint amountETH) {
-        address pair = WakaSwapLibrary.pairFor(factory, token, WETH);
+        address pair = WakaSwapLibrary.pairFor(factory, token, WFTM);
         uint value = approveMax ? uint(-1) : liquidity;
         IWakaSwapPair(pair).permit(msg.sender, address(this), value, deadline, v, r, s);
         (amountToken, amountETH) = removeLiquidityETH(token, liquidity, amountTokenMin, amountETHMin, to, deadline);
@@ -180,7 +180,7 @@ contract WakaSwapRouter02 is IWakaSwapRouter02 {
     ) public virtual override ensure(deadline) returns (uint amountETH) {
         (, amountETH) = removeLiquidity(
             token,
-            WETH,
+            WFTM,
             liquidity,
             amountTokenMin,
             amountETHMin,
@@ -188,7 +188,7 @@ contract WakaSwapRouter02 is IWakaSwapRouter02 {
             deadline
         );
         TransferHelper.safeTransfer(token, to, IERC20WakaSwap(token).balanceOf(address(this)));
-        IWETH(WETH).withdraw(amountETH);
+        IWFTM(WFTM).withdraw(amountETH);
         TransferHelper.safeTransferETH(to, amountETH);
     }
     function removeLiquidityETHWithPermitSupportingFeeOnTransferTokens(
@@ -200,7 +200,7 @@ contract WakaSwapRouter02 is IWakaSwapRouter02 {
         uint deadline,
         bool approveMax, uint8 v, bytes32 r, bytes32 s
     ) external virtual override returns (uint amountETH) {
-        address pair = WakaSwapLibrary.pairFor(factory, token, WETH);
+        address pair = WakaSwapLibrary.pairFor(factory, token, WFTM);
         uint value = approveMax ? uint(-1) : liquidity;
         IWakaSwapPair(pair).permit(msg.sender, address(this), value, deadline, v, r, s);
         amountETH = removeLiquidityETHSupportingFeeOnTransferTokens(
@@ -258,11 +258,11 @@ contract WakaSwapRouter02 is IWakaSwapRouter02 {
         ensure(deadline)
         returns (uint[] memory amounts)
     {
-        require(path[0] == WETH, 'WakaSwapRouter: INVALID_PATH');
+        require(path[0] == WFTM, 'WakaSwapRouter: INVALID_PATH');
         amounts = WakaSwapLibrary.getAmountsOut(factory, msg.value, path);
         require(amounts[amounts.length - 1] >= amountOutMin, 'WakaSwapRouter: INSUFFICIENT_OUTPUT_AMOUNT');
-        IWETH(WETH).deposit{value: amounts[0]}();
-        assert(IWETH(WETH).transfer(WakaSwapLibrary.pairFor(factory, path[0], path[1]), amounts[0]));
+        IWFTM(WFTM).deposit{value: amounts[0]}();
+        assert(IWFTM(WFTM).transfer(WakaSwapLibrary.pairFor(factory, path[0], path[1]), amounts[0]));
         _swap(amounts, path, to);
     }
     function swapTokensForExactETH(uint amountOut, uint amountInMax, address[] calldata path, address to, uint deadline)
@@ -272,14 +272,14 @@ contract WakaSwapRouter02 is IWakaSwapRouter02 {
         ensure(deadline)
         returns (uint[] memory amounts)
     {
-        require(path[path.length - 1] == WETH, 'WakaSwapRouter: INVALID_PATH');
+        require(path[path.length - 1] == WFTM, 'WakaSwapRouter: INVALID_PATH');
         amounts = WakaSwapLibrary.getAmountsIn(factory, amountOut, path);
         require(amounts[0] <= amountInMax, 'WakaSwapRouter: EXCESSIVE_INPUT_AMOUNT');
         TransferHelper.safeTransferFrom(
             path[0], msg.sender, WakaSwapLibrary.pairFor(factory, path[0], path[1]), amounts[0]
         );
         _swap(amounts, path, address(this));
-        IWETH(WETH).withdraw(amounts[amounts.length - 1]);
+        IWFTM(WFTM).withdraw(amounts[amounts.length - 1]);
         TransferHelper.safeTransferETH(to, amounts[amounts.length - 1]);
     }
     function swapExactTokensForETH(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline)
@@ -289,14 +289,14 @@ contract WakaSwapRouter02 is IWakaSwapRouter02 {
         ensure(deadline)
         returns (uint[] memory amounts)
     {
-        require(path[path.length - 1] == WETH, 'WakaSwapRouter: INVALID_PATH');
+        require(path[path.length - 1] == WFTM, 'WakaSwapRouter: INVALID_PATH');
         amounts = WakaSwapLibrary.getAmountsOut(factory, amountIn, path);
         require(amounts[amounts.length - 1] >= amountOutMin, 'WakaSwapRouter: INSUFFICIENT_OUTPUT_AMOUNT');
         TransferHelper.safeTransferFrom(
             path[0], msg.sender, WakaSwapLibrary.pairFor(factory, path[0], path[1]), amounts[0]
         );
         _swap(amounts, path, address(this));
-        IWETH(WETH).withdraw(amounts[amounts.length - 1]);
+        IWFTM(WFTM).withdraw(amounts[amounts.length - 1]);
         TransferHelper.safeTransferETH(to, amounts[amounts.length - 1]);
     }
     function swapETHForExactTokens(uint amountOut, address[] calldata path, address to, uint deadline)
@@ -307,13 +307,13 @@ contract WakaSwapRouter02 is IWakaSwapRouter02 {
         ensure(deadline)
         returns (uint[] memory amounts)
     {
-        require(path[0] == WETH, 'WakaSwapRouter: INVALID_PATH');
+        require(path[0] == WFTM, 'WakaSwapRouter: INVALID_PATH');
         amounts = WakaSwapLibrary.getAmountsIn(factory, amountOut, path);
         require(amounts[0] <= msg.value, 'WakaSwapRouter: EXCESSIVE_INPUT_AMOUNT');
-        IWETH(WETH).deposit{value: amounts[0]}();
-        assert(IWETH(WETH).transfer(WakaSwapLibrary.pairFor(factory, path[0], path[1]), amounts[0]));
+        IWFTM(WFTM).deposit{value: amounts[0]}();
+        assert(IWFTM(WFTM).transfer(WakaSwapLibrary.pairFor(factory, path[0], path[1]), amounts[0]));
         _swap(amounts, path, to);
-        // refund dust eth, if any
+        // refund dust ftm, if any
         if (msg.value > amounts[0]) TransferHelper.safeTransferETH(msg.sender, msg.value - amounts[0]);
     }
 
@@ -366,10 +366,10 @@ contract WakaSwapRouter02 is IWakaSwapRouter02 {
         payable
         ensure(deadline)
     {
-        require(path[0] == WETH, 'WakaSwapRouter: INVALID_PATH');
+        require(path[0] == WFTM, 'WakaSwapRouter: INVALID_PATH');
         uint amountIn = msg.value;
-        IWETH(WETH).deposit{value: amountIn}();
-        assert(IWETH(WETH).transfer(WakaSwapLibrary.pairFor(factory, path[0], path[1]), amountIn));
+        IWFTM(WFTM).deposit{value: amountIn}();
+        assert(IWFTM(WFTM).transfer(WakaSwapLibrary.pairFor(factory, path[0], path[1]), amountIn));
         uint balanceBefore = IERC20WakaSwap(path[path.length - 1]).balanceOf(to);
         _swapSupportingFeeOnTransferTokens(path, to);
         require(
@@ -389,14 +389,14 @@ contract WakaSwapRouter02 is IWakaSwapRouter02 {
         override
         ensure(deadline)
     {
-        require(path[path.length - 1] == WETH, 'WakaSwapRouter: INVALID_PATH');
+        require(path[path.length - 1] == WFTM, 'WakaSwapRouter: INVALID_PATH');
         TransferHelper.safeTransferFrom(
             path[0], msg.sender, WakaSwapLibrary.pairFor(factory, path[0], path[1]), amountIn
         );
         _swapSupportingFeeOnTransferTokens(path, address(this));
-        uint amountOut = IERC20WakaSwap(WETH).balanceOf(address(this));
+        uint amountOut = IERC20WakaSwap(WFTM).balanceOf(address(this));
         require(amountOut >= amountOutMin, 'WakaSwapRouter: INSUFFICIENT_OUTPUT_AMOUNT');
-        IWETH(WETH).withdraw(amountOut);
+        IWFTM(WFTM).withdraw(amountOut);
         TransferHelper.safeTransferETH(to, amountOut);
     }
 

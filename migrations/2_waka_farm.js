@@ -20,10 +20,12 @@ module.exports = async function (deployer) {
     await farm.add(100, waka.address, false)
 };
 /*
+Ropsten
 "9771234",
 "9777734",
 "6500",
 
+Fantom
 "386085",
 "836085",
 "15000",
