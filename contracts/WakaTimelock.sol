@@ -609,7 +609,7 @@ contract WakaTimelock {
      * @notice Transfers tokens held by timelock to beneficiary.
      */
     function release() public {
-        require(block.timestamp >= _startBlock, "token not locked yet");
+        
         require(block.timestamp >= _startBlock.add(_releaseInterval), "current time is before release time");
 
         uint256 amount = _token.balanceOf(address(this));
