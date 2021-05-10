@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 // WakaBar is the coolest bar in town. You come in with some Waka, and leave with more! The longer you stay, the more Waka you get.
 //
 // This contract handles swapping to and from xWaka, WakaSwap's staking token.
-contract WakaBar is ERC20("WakaBar", "xWAKA"){
+contract WakaBar is ERC20("PucMan", "xWAKA"){
     using SafeMath for uint256;
     IERC20 public waka;
 
@@ -28,7 +28,7 @@ contract WakaBar is ERC20("WakaBar", "xWAKA"){
         // If no xWaka exists, mint it 1:1 to the amount put in
         if (totalShares == 0 || totalWaka == 0) {
             _mint(msg.sender, _amount);
-        } 
+        }
         // Calculate and mint the amount of xWaka the Waka is worth. The ratio will change overtime, as xWaka is burned/minted and Waka deposited + gained from fees / withdrawn.
         else {
             uint256 what = _amount.mul(totalShares).div(totalWaka);

@@ -23,7 +23,8 @@ library WakaSwapLibrary {
                 hex'ff',
                 factory,
                 keccak256(abi.encodePacked(token0, token1)),
-                hex'b024d5b7a1067029cd52e3a53b003f3aad171f26f73a8c207d331e116b490be4' // init code hash
+                hex'e16b4aedac5210c4c76663d59b53e37d06e883d12b34fd3e9fa2879ac876d18d' // init code hash
+
             ))));
     }
 

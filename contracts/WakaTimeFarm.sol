@@ -76,7 +76,7 @@ contract WakaFarm is Ownable {
 
     constructor(
         WakaToken _waka,
-        address _devAddr,
+        address _maintenanceAddr,
         uint256 _wakaStartTime,
         uint256 _startTime,
         uint256 _bonusEndTime,
@@ -85,7 +85,7 @@ contract WakaFarm is Ownable {
         uint256 _bonusEndCommonDifference
     ) public {
         waka = _waka;
-        devAddr = _devAddr;
+        maintenance = _maintenanceAddr;
         wakaStartTime = _wakaStartTime;
         startTime = _startTime;
         bonusEndTime = _bonusEndTime;
@@ -367,9 +367,9 @@ contract WakaFarm is Ownable {
         }
     }
 
-    // Update dev address by the previous dev or governance
-    function changeDevAddr(address _devAddr) public {
-        require(msg.sender == devAddr, 'bruh');
-        devAddr = _devAddr;
+    // Update maintenance address by the previous dev or governance
+    function changeMaintenanceAddr(address _maintenanceAddr) public {
+        require(msg.sender == maintenance, 'nope');
+        maintenance = _maintenanceAddr;
     }
 }
