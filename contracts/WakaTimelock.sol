@@ -601,7 +601,7 @@ contract WakaTimelock {
         require(_token.balanceOf(address(this)) == 0, "current timelock has balance");
         require(amount >= _minLockAmount, "must be larger amount");
 
-        _startBlock = getBlockNumber();
+        _startBlock = getBlockTimestamp();
         _token.safeTransferFrom(msg.sender, address(this), amount);
     }
 
@@ -680,9 +680,9 @@ contract WakaTimelock {
     }
 
     /**
-     * @return the block number.
+     * @return the block timestamp.
      */
-    function getBlockNumber() public view returns (uint) {
-        return block.number;
+    function getBlockTimestamp() public view returns (uint) {
+        return block.timestamp;
     }
 }
