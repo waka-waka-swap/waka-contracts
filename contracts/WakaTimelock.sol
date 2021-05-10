@@ -1,4 +1,4 @@
-// Timelock for 100,000 WAKA 
+// Timelock for 100,000 WAKA
 
 // SPDX-License-Identifier: MIT
 
@@ -499,7 +499,7 @@ contract WakaTimelock {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
     using Address for address;
-    
+
     // admin
     address private admin;
 
@@ -508,13 +508,13 @@ contract WakaTimelock {
 
     // beneficiary of tokens after they are released
     address private _beneficiary;
-    
+
     // start block of lock
     uint256 private _startBlock;
-    
+
     // release block interval
     uint256 private _releaseInterval = 585000;
-    
+
     // release token amount
     uint256 private _releaseAmount = 25000e18;
 
@@ -535,14 +535,14 @@ contract WakaTimelock {
 
     /// @notice Emitted when release amount is changed
     event NewReleaseAmount(uint256 oldReleaseAmount, uint256 newReleaseAmount);
-    
+
     constructor (IERC20 token_, address beneficiary_) public {
         admin = msg.sender;
-        
+
         _token = token_;
         _beneficiary = beneficiary_;
     }
-    
+
     modifier onlyAdmin {
         require(msg.sender == admin, "only admin");
         _;
@@ -561,44 +561,37 @@ contract WakaTimelock {
     receive() external payable {
         revert();
     }
-    
+
     /*** Admin Functions ***/
-    
+
     /*** Set Admin ***/
     function setAdmin(address newAdmin) external onlyAdmin {
         address oldAdmin = admin;
         admin = newAdmin;
         emit NewAdmin(oldAdmin, newAdmin);
     }
-    
-    /*** Set Token ***/
-    function setToken(IERC20 newToken) external onlyAdmin {
-        IERC20 oldToken = _token;
-        _token = newToken;
-        emit NewToken(address(oldToken), address(newToken));
-    }
-    
+
     /*** Set Beneficiary ***/
     function setBeneficiary(address newBeneficiary) external onlyAdmin {
         address oldBeneficiary = _beneficiary;
         _beneficiary = newBeneficiary;
         emit NewBeneficiary(oldBeneficiary, newBeneficiary);
     }
-    
+
     /*** Set Release Interval ***/
     function setReleaseInterval(uint256 newReleaseInterval) external onlyAdmin {
         uint256 oldReleaseInterval = _releaseInterval;
         _releaseInterval = newReleaseInterval;
         emit NewReleaseInterval(oldReleaseInterval, newReleaseInterval);
     }
-    
+
     /*** Set Release Amount ***/
     function setReleaseAmount(uint256 newReleaseAmount) external onlyAdmin {
         uint256 oldReleaseAmount = _releaseAmount;
         _releaseAmount = newReleaseAmount;
         emit NewReleaseAmount(oldReleaseAmount, newReleaseAmount);
     }
-    
+
     /*** Main Actions ***/
 
     /**
@@ -628,14 +621,14 @@ contract WakaTimelock {
         } else {
             actualAmount = amount;
         }
-        
+
         uint256 oldStartBlock = _startBlock;
         _startBlock = oldStartBlock.add(_releaseInterval);
-        
+
         _token.safeTransfer(_beneficiary, actualAmount);
     }
-    
-    
+
+
     /*** timelock information functions ***/
     /**
      * @return the token being held.
