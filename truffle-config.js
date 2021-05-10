@@ -24,6 +24,13 @@ module.exports = {
     fantom: {
       provider: () => new HDWalletProvider(mnemonic, 'https://rpcapi.fantom.network'),
       network_id: 250,
+      networkCheckTimeout: 200000,
+    },
+    ropsten: {
+      provider: () => new HDWalletProvider(mnemonic, `https://ropsten.infura.io/v3/${infuraKey}`),
+      network_id: 3,
+      skipDryRun: true,
+      networkCheckTimeout: 200000,
     }
     ,
     ropsten: {
