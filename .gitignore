@@ -2,3 +2,4 @@ secret.json
 build/
 node_modules/
 test/
+.idea
