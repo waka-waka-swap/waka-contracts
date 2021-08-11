@@ -1,5 +1,7 @@
-pragma solidity 0.6.12;
+// SPDX-License-Identifier: GPL-3.0
 
+pragma solidity 0.6.12;
+pragma experimental ABIEncoderV2;
 import "../utils/ReentrancyGuard.sol";
 import "../utils/Ownable.sol";
 import "../utils/SafeMath.sol";
@@ -23,16 +25,17 @@ contract WakaTiers is Ownable, ReentrancyGuard {
     uint[MAX_NUM_TIERS] public tierWeight;
 
     uint[] public withdrawFeePercent;
-    ERC20 public DUCK;
+    ERC20 public WAKA;
 
     bool public canEmergencyWithdraw;
+    address public feeRecipient;
 
     event Staked(address indexed user, uint amount);
     event Withdrawn(address indexed user, uint indexed amount, uint fee);
     event EmergencyWithdrawn(address indexed user, uint amount);
 
-    constructor(address _duckTokenAddress) public {
-        DUCK = ERC20Burnable(_duckTokenAddress);
+    constructor(address _wakaTokenAddress, address _wakaFeeRecipient) public {
+        WAKA = ERC20(_wakaTokenAddress);
 
         tierPrice[1] = 2000e18;
         tierPrice[2] = 5000e18;
@@ -50,10 +53,11 @@ contract WakaTiers is Ownable, ReentrancyGuard {
         withdrawFeePercent.push(10);
         withdrawFeePercent.push(5);
         withdrawFeePercent.push(0);
+        feeRecipient = _wakaFeeRecipient;
     }
 
     function deposit(uint _amount) external nonReentrant() {
-        DUCK.transferFrom(msg.sender, address(this), _amount);
+        WAKA.transferFrom(msg.sender, address(this), _amount);
 
         userInfo[msg.sender].staked = userInfo[msg.sender].staked.add(_amount);
         userInfo[msg.sender].stakedTime = block.timestamp;
@@ -65,15 +69,12 @@ contract WakaTiers is Ownable, ReentrancyGuard {
         UserInfo storage user = userInfo[msg.sender];
         require(user.staked >= _amount, "not enough amount to withdraw");
 
-        uint toBurn = calculateWithdrawFee(msg.sender, _amount);
+        uint fee = calculateWithdrawFee(msg.sender, _amount);
         user.staked = user.staked.sub(_amount);
 
-        if(toBurn > 0) {
-            DUCK.burn(toBurn);
-        }
-
-        DUCK.transfer(msg.sender, _amount.sub(toBurn));
-        emit Withdrawn(msg.sender, _amount, toBurn);
+        WAKA.transfer(feeRecipient, fee);
+        WAKA.transfer(msg.sender, _amount.sub(fee));
+        emit Withdrawn(msg.sender, _amount, fee);
     }
 
     function updateEmergencyWithdrawStatus(bool _status) external onlyOwner {
@@ -88,7 +89,7 @@ contract WakaTiers is Ownable, ReentrancyGuard {
         uint _amount = user.staked;
         user.staked = 0;
 
-        DUCK.transfer(msg.sender, _amount);
+        WAKA.transfer(msg.sender, _amount);
         emit EmergencyWithdrawn(msg.sender, _amount);
     }
 
@@ -148,17 +149,5 @@ contract WakaTiers is Ownable, ReentrancyGuard {
         }
 
         return _amount.mul(withdrawFeePercent[5]).div(100);
-    }
-
-    //frontend func
-    function getTiers() external view returns(uint[MAX_NUM_TIERS] memory buf) {
-        for(uint8 i = 1; i < MAX_NUM_TIERS; i++) {
-            if(tierPrice[i] == 0) {
-                return buf;
-            }
-            buf[i-1] = tierPrice[i];
-        }
-
-        return buf;
     }
 }

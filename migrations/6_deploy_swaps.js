@@ -20,5 +20,5 @@ module.exports = async function (deployer) {
   const maker = await WakaMaker.deployed();
   await factory.setFeeTo(maker.address); */
 
-  await deployer.deploy(WakaSwapRouter02, "0x47b8735D2D51624fF7AcfC6F66aC6647ffc92afB", "0x21be370d5312f44cb42ce377bc9b8a0cef1a4c83");
+  // await deployer.deploy(WakaSwapRouter02, "0x47b8735D2D51624fF7AcfC6F66aC6647ffc92afB", "0x21be370d5312f44cb42ce377bc9b8a0cef1a4c83");
 };

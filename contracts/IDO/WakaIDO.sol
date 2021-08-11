@@ -1,10 +1,12 @@
+// SPDX-License-Identifier: GPL-3.0
+
 pragma solidity 0.6.12;
 
 import "./WakaTiers.sol";
 import "../utils/SafeERC20.sol";
 
-contract IFO is ReentrancyGuard {
-    uint constant MAX_NUM_TIERS = 10;
+contract WakaIDO is ReentrancyGuard {
+    uint constant MAX_NUM_TIERS = 4;
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -37,9 +39,9 @@ contract IFO is ReentrancyGuard {
     // participators
     address[] public addressList;
 
-    uint[MAX_NUM_TIERS] public numberOfUsersByTier;
+    uint[MAX_NUM_TIERS + 1] public numberOfUsersByTier;
 
-    uint256 public offeringAmountFistRoundTotal;
+    uint256 public offeringAmountFirstRoundTotal;
     uint256 public offeringAmountSecondRoundTotal;
     uint256 public offeringAmountThirdRoundTotal;
 
@@ -87,7 +89,7 @@ contract IFO is ReentrancyGuard {
     }
 
     modifier onlyNotClaimed() {
-        require (userInfo[msg.sender].claimed, 'the user has already claimed');
+        require (!userInfo[msg.sender].claimed, 'the user has already claimed');
         _;
     }
 
@@ -101,16 +103,16 @@ contract IFO is ReentrancyGuard {
         require (block.number < firstRoundStartBlock, 'registration finished');
         uint8 currentTier = tiersContract.getUserTier(msg.sender);
         require (currentTier != 0, 'the user has no tier');
-        UserInfo registeredUser = userInfo[msg.sender];
-        if (registeredUser.registered) {
-            numberOfUsersByTier[registeredUser.tier]--;
+        if (userInfo[msg.sender].registered) {
+            numberOfUsersByTier[currentTier] = numberOfUsersByTier[currentTier].sub(1);
         }
         userInfo[msg.sender].tier = currentTier;
         userInfo[msg.sender].registered = true;
+        numberOfUsersByTier[currentTier] = numberOfUsersByTier[currentTier].add(1);
     }
 
     function getTierWeight(uint8 _tier) public view returns(uint256) {
-        return numberOfUsersByTier[_tier].mul(tiersContract.tierWeight[_tier]);
+        return numberOfUsersByTier[_tier].mul(tiersContract.tierWeight(_tier));
     }
 
     function getTierAllocation(uint8 _tier) public view returns(uint256) {
@@ -127,12 +129,12 @@ contract IFO is ReentrancyGuard {
 
     function getTokensLeftInPool() public view returns(uint256) {
         return offeringAmount
-        .sub(offeringAmountFistRoundTotal)
+        .sub(offeringAmountFirstRoundTotal)
         .sub(offeringAmountSecondRoundTotal)
         .sub(offeringAmountThirdRoundTotal);
     }
 
-    function getSecondRoundAllocation(uint256 _amount) public pure view returns(uint256) {
+    function getSecondRoundAllocation(uint256 _amount) public pure returns(uint256) {
         return _amount.div(2);
     }
 
@@ -143,12 +145,12 @@ contract IFO is ReentrancyGuard {
     function depositFirstRound(uint256 _amountToPay) public onlyRegistered notZeroAmount(_amountToPay) {
         require (block.number > firstRoundStartBlock && block.number < firstRoundEndBlock, 'not the first round time');
         uint256 userAllocation = getUserAllocation(msg.sender);
-        UserInfo user = userInfo[msg.sender];
+        UserInfo storage user = userInfo[msg.sender];
         uint256 offeringTokenLeftToBuy = userAllocation.sub(user.firstRoundAmountToClaim);
         require (offeringTokenLeftToBuy > 0, 'no tokens left to buy');
         uint256 amountToDeposit = _amountToPay;
         uint256 offeringTokenReceived = _amountToPay.mul(offeringAmount).div(raisingAmount);
-        if (offeringTokenReceived < offeringTokenLeftToBuy) {
+        if (offeringTokenLeftToBuy < offeringTokenReceived) {
             offeringTokenReceived = offeringTokenLeftToBuy;
             amountToDeposit = offeringTokenLeftToBuy.mul(raisingAmount).div(offeringAmount);
         }
@@ -157,25 +159,25 @@ contract IFO is ReentrancyGuard {
             addressList.push(address(msg.sender));
         }
         user.firstRoundAmountToClaim = user.firstRoundAmountToClaim.add(offeringTokenReceived);
-        offeringAmountFistRoundTotal = offeringAmountFistRoundTotal.add(offeringTokenReceived);
+        offeringAmountFirstRoundTotal = offeringAmountFirstRoundTotal.add(offeringTokenReceived);
         emit Deposit(msg.sender, amountToDeposit, 1);
     }
 
     function depositSecondRound(uint256 _amountToPay) public onlyRegistered notZeroAmount(_amountToPay) {
         require (block.number > firstRoundEndBlock && block.number < secondRoundEndBlock, 'not the second round time');
         uint256 userAllocation = getSecondRoundAllocation(getUserAllocation(msg.sender));
-        UserInfo user = userInfo[msg.sender]; // TODO: fix storage
+        UserInfo storage user = userInfo[msg.sender]; // TODO: fix storage
         uint256 offeringTokenLeftToBuy = userAllocation.sub(user.secondRoundAmountToClaim);
         uint256 tokensLeftInPool = getTokensLeftInPool();
         require (offeringTokenLeftToBuy > 0 && tokensLeftInPool > 0, 'no tokens left to buy');
         uint256 amountToDeposit = _amountToPay;
         uint256 offeringTokenReceived = _amountToPay.mul(offeringAmount).div(raisingAmount);
 
-        if (offeringTokenReceived < offeringTokenLeftToBuy) {
+        if (offeringTokenLeftToBuy < offeringTokenReceived) {
             offeringTokenReceived = offeringTokenLeftToBuy;
         }
 
-        if (offeringTokenReceived < tokensLeftInPool) {
+        if (tokensLeftInPool < offeringTokenReceived) {
             offeringTokenLeftToBuy = tokensLeftInPool;
         }
         amountToDeposit = offeringTokenReceived.mul(raisingAmount).div(offeringAmount);
@@ -194,10 +196,11 @@ contract IFO is ReentrancyGuard {
         require (block.number > secondRoundEndBlock, 'not the second round time');
         uint256 tokensLeftInPool = getTokensLeftInPool();
         require (tokensLeftInPool > 0, 'no tokens left in the pool');
+        UserInfo storage user = userInfo[msg.sender];
         uint256 amountToDeposit = _amountToPay;
         uint256 offeringTokenReceived = _amountToPay.mul(offeringAmount).div(raisingAmount);
 
-        if (offeringTokenReceived < tokensLeftInPool) {
+        if (tokensLeftInPool < offeringTokenReceived) {
             offeringTokenReceived = tokensLeftInPool;
             amountToDeposit = offeringTokenReceived.mul(raisingAmount).div(offeringAmount);
         }
@@ -225,7 +228,7 @@ contract IFO is ReentrancyGuard {
 
     function claim() public nonReentrant onlyRegistered onlyNotClaimed {
         require (block.number > holdTokensTillBlock, 'claim has not been started');
-        UserInfo user = userInfo[msg.sender];
+        UserInfo storage user = userInfo[msg.sender];
         uint256 offeringTokenAmount = user.firstRoundAmountToClaim
         .add(user.secondRoundAmountToClaim)
         .add(user.thirdRoundAmountToClaim);
