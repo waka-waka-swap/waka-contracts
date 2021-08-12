@@ -63,8 +63,8 @@ contract WakaIDO is ReentrancyGuard {
     ) public {
         require(_registrationStartBlock < _firstRoundStartBlock, 'the first round block number is less than the registration start');
         require(_firstRoundStartBlock < _firstRoundEndBlock, 'the first round end number is less than the start');
-        require(_firstRoundEndBlock < _secondRoundEndBlock, 'the first round end block is more than the second round start');
-        require(_secondRoundEndBlock < _holdTokensTillBlock, 'the second round end block is more than the hold till tokens block number');
+        require(_firstRoundEndBlock <= _secondRoundEndBlock, 'the first round end block is more than the second round start');
+        require(_secondRoundEndBlock <= _holdTokensTillBlock, 'the second round end block is more than the hold till tokens block number');
         raisingToken = _raisingToken;
         offeringToken = _offeringToken;
         registrationStartBlock = _registrationStartBlock;
@@ -138,7 +138,10 @@ contract WakaIDO is ReentrancyGuard {
         return _amount.div(2);
     }
 
-    function getUserAllocation(address _user) public view onlyRegistered returns(uint256) {
+    function getUserAllocation(address _user) public view returns(uint256) {
+        if (userInfo[_user].tier == 0) {
+            return 0;
+        }
         return getTierAllocation(userInfo[_user].tier).div(numberOfUsersByTier[userInfo[_user].tier]);
     }
 
@@ -226,7 +229,7 @@ contract WakaIDO is ReentrancyGuard {
         raisingAmount= _raisingAmount;
     }
 
-    function claim() public nonReentrant onlyRegistered onlyNotClaimed {
+    function claim() public nonReentrant onlyNotClaimed {
         require (block.number > holdTokensTillBlock, 'claim has not been started');
         UserInfo storage user = userInfo[msg.sender];
         uint256 offeringTokenAmount = user.firstRoundAmountToClaim
