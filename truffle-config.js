@@ -1,5 +1,6 @@
-const HDWalletProvider = require('truffle-hdwallet-provider');
-const { mnemonic, ftmscan, etherscan, infrakey } = require('./secret.json');
+const HDWalletProvider = require('@truffle/hdwallet-provider');
+const mnemonic = ''
+const id = ''
 
 module.exports = {
   compilers: {
@@ -14,7 +15,6 @@ module.exports = {
     }
   },
   plugins: ['truffle-plugin-verify'],
-  api_keys: { ftmscan, etherscan },
   networks: {
     development: {
       host: "127.0.0.1",
@@ -26,15 +26,14 @@ module.exports = {
       network_id: 250,
       networkCheckTimeout: 200000,
     },
-    ropsten: {
-      provider: () => new HDWalletProvider(mnemonic, `https://ropsten.infura.io/v3/${infuraKey}`),
-      network_id: 3,
+    fantomtest: {
+      provider: () => new HDWalletProvider(mnemonic, 'https://rpc.testnet.fantom.network'),
+      network_id: 4002,
       skipDryRun: true,
       networkCheckTimeout: 200000,
-    }
-    ,
+    },
     ropsten: {
-      provider: () => new HDWalletProvider(mnemonic, `https://ropsten.infura.io/v3/${infrakey}`),
+      provider: () => new HDWalletProvider(mnemonic, `https://ropsten.infura.io/v3/${id}`),
       network_id: 3,
       skipDryRun: true,
       networkCheckTimeout: 200000,

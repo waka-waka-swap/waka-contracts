@@ -104,7 +104,7 @@ contract WakaIDO is ReentrancyGuard {
         uint8 currentTier = tiersContract.getUserTier(msg.sender);
         require (currentTier != 0, 'the user has no tier');
         if (userInfo[msg.sender].registered) {
-            numberOfUsersByTier[currentTier] = numberOfUsersByTier[currentTier].sub(1);
+            numberOfUsersByTier[userInfo[msg.sender].tier] = numberOfUsersByTier[userInfo[msg.sender].tier].sub(1);
         }
         userInfo[msg.sender].tier = currentTier;
         userInfo[msg.sender].registered = true;
