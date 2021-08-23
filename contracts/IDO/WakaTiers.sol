@@ -2,13 +2,12 @@
 
 pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
-import "../utils/ReentrancyGuard.sol";
-import "../utils/Ownable.sol";
 import "../utils/SafeMath.sol";
 import "../utils/ERC20.sol";
+import "../utils/Governable.sol";
 
 
-contract WakaTiers is Ownable, ReentrancyGuard {
+contract WakaTiers is Governable {
 
     using SafeMath for uint;
 
@@ -25,7 +24,7 @@ contract WakaTiers is Ownable, ReentrancyGuard {
     uint[MAX_NUM_TIERS] public tierWeight;
 
     uint[] public withdrawFeePercent;
-    ERC20 public WAKA;
+    IERC20 public WAKA;
 
     bool public canEmergencyWithdraw;
     address public feeRecipient;
@@ -34,8 +33,10 @@ contract WakaTiers is Ownable, ReentrancyGuard {
     event Withdrawn(address indexed user, uint indexed amount, uint fee);
     event EmergencyWithdrawn(address indexed user, uint amount);
 
-    constructor(address _wakaTokenAddress, address _wakaFeeRecipient) public {
-        WAKA = ERC20(_wakaTokenAddress);
+    function __WakaTiers_init(IERC20 _wakaTokenAddress, address _wakaFeeRecipient, address _governor) public initializer {
+        __Governable_init_unchained(_governor);
+
+        WAKA = _wakaTokenAddress;
 
         tierPrice[1] = 2000e18;
         tierPrice[2] = 5000e18;
@@ -56,16 +57,15 @@ contract WakaTiers is Ownable, ReentrancyGuard {
         feeRecipient = _wakaFeeRecipient;
     }
 
-    function deposit(uint _amount) external nonReentrant() {
-        WAKA.transferFrom(msg.sender, address(this), _amount);
-
+    function deposit(uint _amount) external {
         userInfo[msg.sender].staked = userInfo[msg.sender].staked.add(_amount);
         userInfo[msg.sender].stakedTime = block.timestamp;
 
+        WAKA.transferFrom(msg.sender, address(this), _amount);
         emit Staked(msg.sender, _amount);
     }
 
-    function withdraw(uint _amount) external nonReentrant() {
+    function withdraw(uint _amount) external {
         UserInfo storage user = userInfo[msg.sender];
         require(user.staked >= _amount, "not enough amount to withdraw");
 
@@ -77,7 +77,7 @@ contract WakaTiers is Ownable, ReentrancyGuard {
         emit Withdrawn(msg.sender, _amount, fee);
     }
 
-    function updateEmergencyWithdrawStatus(bool _status) external onlyOwner {
+    function updateEmergencyWithdrawStatus(bool _status) external governance {
         canEmergencyWithdraw = _status;
     }
 
@@ -93,7 +93,7 @@ contract WakaTiers is Ownable, ReentrancyGuard {
         emit EmergencyWithdrawn(msg.sender, _amount);
     }
 
-    function updateTierPrice(uint8 _tierId, uint _amount) external onlyOwner {
+    function updateTierPrice(uint8 _tierId, uint _amount) external governance {
         require(_tierId > 0 && _tierId <= MAX_NUM_TIERS, "invalid _tierId");
         tierPrice[_tierId] = _amount;
         if (_tierId > currentMaxTier) {
@@ -101,7 +101,7 @@ contract WakaTiers is Ownable, ReentrancyGuard {
         }
     }
 
-    function updateTierWeight(uint8 _tierId, uint _amount) external onlyOwner {
+    function updateTierWeight(uint8 _tierId, uint _amount) external governance {
         require(_tierId > 0 && _tierId <= MAX_NUM_TIERS, "invalid _tierId");
         tierWeight[_tierId] = _amount;
         if (_tierId > currentMaxTier) {
@@ -109,7 +109,7 @@ contract WakaTiers is Ownable, ReentrancyGuard {
         }
     }
 
-    function updateWithdrawFee(uint _key, uint _percent) external onlyOwner {
+    function updateWithdrawFee(uint _key, uint _percent) external governance {
         require(_percent < 100, "too high percent");
         withdrawFeePercent[_key] = _percent;
     }

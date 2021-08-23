@@ -4,8 +4,9 @@ pragma solidity 0.6.12;
 
 import "./WakaTiers.sol";
 import "../utils/SafeERC20.sol";
+import "../utils/Ownable.sol";
 
-contract WakaIDO is ReentrancyGuard {
+contract WakaIDO is Ownable {
     uint constant MAX_NUM_TIERS = 4;
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
@@ -19,7 +20,6 @@ contract WakaIDO is ReentrancyGuard {
         bool claimed;
     }
 
-    address public adminAddress;
     IERC20 public raisingToken;
     IERC20 public offeringToken;
     WakaTiers public tiersContract;
@@ -58,7 +58,6 @@ contract WakaIDO is ReentrancyGuard {
         uint256 _holdTokensTillBlock,
         uint256 _offeringAmount,
         uint256 _raisingAmount,
-        address _adminAddress,
         address _tiersContractAddress
     ) public {
         require(_registrationStartBlock < _firstRoundStartBlock, 'the first round block number is less than the registration start');
@@ -74,13 +73,7 @@ contract WakaIDO is ReentrancyGuard {
         holdTokensTillBlock = _holdTokensTillBlock;
         offeringAmount = _offeringAmount;
         raisingAmount = _raisingAmount;
-        adminAddress = _adminAddress;
         tiersContract = WakaTiers(_tiersContractAddress);
-    }
-
-    modifier onlyAdmin() {
-        require(msg.sender == adminAddress, "not an admin");
-        _;
     }
 
     modifier onlyRegistered() {
@@ -157,19 +150,20 @@ contract WakaIDO is ReentrancyGuard {
             offeringTokenReceived = offeringTokenLeftToBuy;
             amountToDeposit = offeringTokenLeftToBuy.mul(raisingAmount).div(offeringAmount);
         }
-        raisingToken.safeTransferFrom(address(msg.sender), address(this), amountToDeposit);
         if (user.firstRoundAmountToClaim == 0) {
             addressList.push(address(msg.sender));
         }
         user.firstRoundAmountToClaim = user.firstRoundAmountToClaim.add(offeringTokenReceived);
         offeringAmountFirstRoundTotal = offeringAmountFirstRoundTotal.add(offeringTokenReceived);
+
+        raisingToken.safeTransferFrom(address(msg.sender), address(this), amountToDeposit);
         emit Deposit(msg.sender, amountToDeposit, 1);
     }
 
     function depositSecondRound(uint256 _amountToPay) public onlyRegistered notZeroAmount(_amountToPay) {
         require (block.number > firstRoundEndBlock && block.number < secondRoundEndBlock, 'not the second round time');
         uint256 userAllocation = getSecondRoundAllocation(getUserAllocation(msg.sender));
-        UserInfo storage user = userInfo[msg.sender]; // TODO: fix storage
+        UserInfo storage user = userInfo[msg.sender];
         uint256 offeringTokenLeftToBuy = userAllocation.sub(user.secondRoundAmountToClaim);
         uint256 tokensLeftInPool = getTokensLeftInPool();
         require (offeringTokenLeftToBuy > 0 && tokensLeftInPool > 0, 'no tokens left to buy');
@@ -184,14 +178,14 @@ contract WakaIDO is ReentrancyGuard {
             offeringTokenLeftToBuy = tokensLeftInPool;
         }
         amountToDeposit = offeringTokenReceived.mul(raisingAmount).div(offeringAmount);
-
-        raisingToken.safeTransferFrom(address(msg.sender), address(this), amountToDeposit);
         bool userDidntDeposit = user.firstRoundAmountToClaim == 0 && user.secondRoundAmountToClaim == 0;
         if (userDidntDeposit) {
             addressList.push(address(msg.sender));
         }
         user.secondRoundAmountToClaim = user.secondRoundAmountToClaim.add(offeringTokenReceived);
         offeringAmountSecondRoundTotal = offeringAmountSecondRoundTotal.add(offeringTokenReceived);
+
+        raisingToken.safeTransferFrom(address(msg.sender), address(this), amountToDeposit);
         emit Deposit(msg.sender, amountToDeposit, 2);
     }
 
@@ -207,7 +201,6 @@ contract WakaIDO is ReentrancyGuard {
             offeringTokenReceived = tokensLeftInPool;
             amountToDeposit = offeringTokenReceived.mul(raisingAmount).div(offeringAmount);
         }
-        raisingToken.safeTransferFrom(address(msg.sender), address(this), amountToDeposit);
         bool userDidntDeposit = user.firstRoundAmountToClaim == 0
         && user.secondRoundAmountToClaim == 0
         && user.thirdRoundAmountToClaim == 0;
@@ -216,29 +209,31 @@ contract WakaIDO is ReentrancyGuard {
         }
         user.thirdRoundAmountToClaim = user.thirdRoundAmountToClaim.add(offeringTokenReceived);
         offeringAmountThirdRoundTotal = offeringAmountThirdRoundTotal.add(offeringTokenReceived);
+
+        raisingToken.safeTransferFrom(address(msg.sender), address(this), amountToDeposit);
         emit Deposit(msg.sender, amountToDeposit, 3);
     }
 
-    function setOfferingAmount(uint256 _offerAmount) public onlyAdmin {
+    function setOfferingAmount(uint256 _offerAmount) public onlyOwner {
         require (block.number < firstRoundStartBlock, 'first round has been already started');
         offeringAmount = _offerAmount;
     }
 
-    function setRaisingAmount(uint256 _raisingAmount) public onlyAdmin {
+    function setRaisingAmount(uint256 _raisingAmount) public onlyOwner {
         require (block.number < firstRoundStartBlock, 'first round has been already started');
         raisingAmount= _raisingAmount;
     }
 
-    function claim() public nonReentrant onlyNotClaimed {
+    function claim() public onlyNotClaimed {
         require (block.number > holdTokensTillBlock, 'claim has not been started');
         UserInfo storage user = userInfo[msg.sender];
         uint256 offeringTokenAmount = user.firstRoundAmountToClaim
         .add(user.secondRoundAmountToClaim)
         .add(user.thirdRoundAmountToClaim);
         require (offeringTokenAmount > 0, 'you didn`t participate');
+        user.claimed = true;
 
         offeringToken.safeTransfer(address(msg.sender), offeringTokenAmount);
-        user.claimed = true;
         emit Claim(msg.sender, offeringTokenAmount);
     }
 
@@ -250,7 +245,7 @@ contract WakaIDO is ReentrancyGuard {
         return addressList.length;
     }
 
-    function finalWithdraw(uint256 _lpAmount, uint256 _offerAmount) public onlyAdmin {
+    function finalWithdraw(uint256 _lpAmount, uint256 _offerAmount) public onlyOwner {
         require (_lpAmount < raisingToken.balanceOf(address(this)), 'not enough token 0');
         require (_offerAmount < offeringToken.balanceOf(address(this)), 'not enough token 1');
         raisingToken.safeTransfer(address(msg.sender), _lpAmount);
