@@ -1,6 +1,9 @@
 var WakaIDO = artifacts.require('WakaIDO');
 
-module.exports = async function (deployer) {
+module.exports = async function (deployer, network) {
+  if (network !== 'development' && network !== 'fantomtest') {
+    return;
+  }
   const raisingToken = "0xe065F7DAA5CC60CE0a96cF56d1B37dA59720b72b";
   const offeringToken = "0x3b2B31A443053829B5f849a84700DeE429E37F62";
   const registrationStartBlock = 1510294;
