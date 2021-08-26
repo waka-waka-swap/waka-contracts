@@ -4,10 +4,10 @@ pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 import "../utils/SafeMath.sol";
 import "../utils/ERC20.sol";
-import "../utils/Governable.sol";
+import "../utils/UpgradableOwnable.sol";
 
 
-contract WakaTiers is Governable {
+contract WakaTiers is UpgradableOwnable {
 
     using SafeMath for uint;
 
