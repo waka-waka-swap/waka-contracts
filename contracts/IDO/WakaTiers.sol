@@ -115,7 +115,7 @@ contract WakaTiers is UpgradableOwnable {
     }
 
     function getUserTier(address _userAddress) external view returns(uint8 res) {
-        for (uint8 i = 1; i <= MAX_NUM_TIERS; i++) {
+        for (uint8 i = 1; i <= currentMaxTier; i++) {
             if(tierPrice[i] == 0 || userInfo[_userAddress].staked < tierPrice[i]) {
                 return res;
             }
