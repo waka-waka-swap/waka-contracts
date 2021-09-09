@@ -91,6 +91,10 @@ contract WakaIDO is Ownable {
         _;
     }
 
+    function setOfferingToken(IERC20 _offeringToken) external onlyOwner  {
+        offeringToken = _offeringToken;
+    }
+
     function register() public {
         require (block.number > registrationStartBlock, 'registration didn`t start');
         require (block.number < firstRoundStartBlock, 'registration finished');
