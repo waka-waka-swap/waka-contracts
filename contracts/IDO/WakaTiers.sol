@@ -17,7 +17,7 @@ contract WakaTiers is UpgradableOwnable {
     }
 
     uint constant MAX_NUM_TIERS = 10;
-    uint8 currentMaxTier = 4;
+    uint public currentMaxTier;
 
     mapping(address => UserInfo) public userInfo;
     uint[MAX_NUM_TIERS] public tierPrice;
@@ -33,8 +33,8 @@ contract WakaTiers is UpgradableOwnable {
     event Withdrawn(address indexed user, uint indexed amount, uint fee);
     event EmergencyWithdrawn(address indexed user, uint amount);
 
-    function __WakaTiers_init(IERC20 _wakaTokenAddress, address _wakaFeeRecipient, address _governor) public initializer {
-        __Governable_init_unchained(_governor);
+    function __WakaTiers_init(IERC20 _wakaTokenAddress, address _wakaFeeRecipient, address _owner) public initializer {
+        __Ownable_init_unchained(_owner);
 
         WAKA = _wakaTokenAddress;
 
@@ -47,6 +47,7 @@ contract WakaTiers is UpgradableOwnable {
         tierWeight[2] = 2;
         tierWeight[3] = 5;
         tierWeight[4] = 10;
+        currentMaxTier = 4;
 
         withdrawFeePercent.push(30);
         withdrawFeePercent.push(25);
@@ -54,6 +55,10 @@ contract WakaTiers is UpgradableOwnable {
         withdrawFeePercent.push(10);
         withdrawFeePercent.push(5);
         withdrawFeePercent.push(0);
+        feeRecipient = _wakaFeeRecipient;
+    }
+
+    function setFeeRecipient(address _wakaFeeRecipient) external onlyOwner {
         feeRecipient = _wakaFeeRecipient;
     }
 
@@ -77,7 +82,7 @@ contract WakaTiers is UpgradableOwnable {
         emit Withdrawn(msg.sender, _amount, fee);
     }
 
-    function updateEmergencyWithdrawStatus(bool _status) external governance {
+    function updateEmergencyWithdrawStatus(bool _status) external onlyOwner {
         canEmergencyWithdraw = _status;
     }
 
@@ -93,7 +98,7 @@ contract WakaTiers is UpgradableOwnable {
         emit EmergencyWithdrawn(msg.sender, _amount);
     }
 
-    function updateTierPrice(uint8 _tierId, uint _amount) external governance {
+    function updateTierPrice(uint8 _tierId, uint _amount) external onlyOwner {
         require(_tierId > 0 && _tierId <= MAX_NUM_TIERS, "invalid _tierId");
         tierPrice[_tierId] = _amount;
         if (_tierId > currentMaxTier) {
@@ -101,7 +106,7 @@ contract WakaTiers is UpgradableOwnable {
         }
     }
 
-    function updateTierWeight(uint8 _tierId, uint _amount) external governance {
+    function updateTierWeight(uint8 _tierId, uint _amount) external onlyOwner {
         require(_tierId > 0 && _tierId <= MAX_NUM_TIERS, "invalid _tierId");
         tierWeight[_tierId] = _amount;
         if (_tierId > currentMaxTier) {
@@ -109,7 +114,7 @@ contract WakaTiers is UpgradableOwnable {
         }
     }
 
-    function updateWithdrawFee(uint _key, uint _percent) external governance {
+    function updateWithdrawFee(uint _key, uint _percent) external onlyOwner {
         require(_percent < 100, "too high percent");
         withdrawFeePercent[_key] = _percent;
     }

@@ -22,8 +22,9 @@ module.exports = {
       network_id: "*",
     },
     fantom: {
-      provider: () => new HDWalletProvider(mnemonic, 'https://rpcapi.fantom.network'),
+      provider: () => new HDWalletProvider(mnemonic, 'https://rpc.ftm.tools'),
       network_id: 250,
+      skipDryRun: true,
       networkCheckTimeout: 200000,
     },
     fantomtest: {

@@ -1,20 +1,19 @@
 var WakaIDO = artifacts.require('WakaIDO');
 
 module.exports = async function (deployer, network) {
-  if (network !== 'development' && network !== 'fantomtest') {
-    return;
-  }
-  const raisingToken = "0xe065F7DAA5CC60CE0a96cF56d1B37dA59720b72b";
-  const offeringToken = "0x3b2B31A443053829B5f849a84700DeE429E37F62";
-  const registrationStartBlock = 1510294;
-  const firstRoundStartBlock = 1510304;
-  const firstRoundEndBlock = 1510305;
-  const secondRoundEndBlock = 1510306;
-  const holdTokensTillBlock = 1610306;
-  const offeringAmount = "100000000000000000000";
-  const raisingAmount = "50000000000000000000";
-  const adminAddress = '0xEC0d3D2D58f71a6C34092B7fc4E8d6096c260037';
-  const tiersContractAddress = '0x522404EF646e233137375E43E6F976cc5FBC852a';
+  // if (network !== 'development' && network !== 'fantomtest') {
+  //   return;
+  // }
+  const raisingToken = "0x21be370d5312f44cb42ce377bc9b8a0cef1a4c83";
+  const offeringToken = "0xf61ccde1d4bb76ced1daa9d4c429cca83022b08b";
+  const registrationStartBlock = 16738939;
+  const firstRoundStartBlock = 16957739;
+  const firstRoundEndBlock = 17367739;
+  const secondRoundEndBlock = 17567739;
+  const holdTokensTillBlock = 17727739;
+  const offeringAmount = "375000000000000000000000";
+  const raisingAmount = "300000000000000000000000";
+  const tiersContractAddress = '0x0bBb858b06f7E5F629778d4Ed99C31e20667858C';
 
   await deployer.deploy(
     WakaIDO,
@@ -27,7 +26,6 @@ module.exports = async function (deployer, network) {
     holdTokensTillBlock,
     offeringAmount,
     raisingAmount,
-    adminAddress,
     tiersContractAddress
   );
 };
